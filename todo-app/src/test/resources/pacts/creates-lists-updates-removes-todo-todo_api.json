@@ -1,0 +1,103 @@
+{
+  "consumer": {
+    "name": "creates-lists-updates-removes-todo"
+  },
+  "provider": {
+    "name": "Todo API"
+  },
+  "interactions": [
+    {
+      "description": "create new todo => POST /api/todos",
+      "provider_state": "Empty list",
+      "request": {
+        "method": "POST",
+        "path": "/api/todos",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "body": {
+          "title": "First todo",
+          "order": 1,
+          "completed": false
+        }
+      },
+      "response": {
+        "status": 201,
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "description": "get all todos => GET /api/todos",
+      "provider_state": "Todo created",
+      "request": {
+        "method": "GET",
+        "path": "/api/todos",
+        "headers": {
+          "Accept": "application/json"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": [
+          {
+            "id": 1,
+            "title": "First todo",
+            "order": 1,
+            "completed": false
+          }
+        ]
+      }
+    },
+    {
+      "description": "update todo => PUT /api/todos/1",
+      "provider_state": "Todo created",
+      "request": {
+        "method": "PUT",
+        "path": "/api/todos/1",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "body": {
+          "id": 1,
+          "title": "First todo updated",
+          "order": 1,
+          "completed": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "id": 2,
+          "title": "First todo updated",
+          "order": 1,
+          "completed": true
+        }
+      }
+    },
+    {
+      "description": "delete a todo => DELETE /api/todos/2",
+      "provider_state": "Todo created",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/todos/1"
+      },
+      "response": {
+        "status": 204,
+        "headers": {
+
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecificationVersion": "2.0.0"
+  }
+}

@@ -51,7 +51,18 @@ The pact file is located in `todo-app/src/test/resources`. An Arquillian test is
 
 The test is run as a part of Intergration Testing phase which can be triggered with Maven's `mvn clean verify`. It spins wildfly instance on pre-integration phase and stops it during post-integration phase.
 
-TIP: The missing UI artifact `com.example.patterns:todo-app-ui` can be buld with `mvn clean install` in the todo-app-ui folder.
+[TIP]
+====
+The missing UI artifact `com.example.patterns:todo-app-ui` can be buld with `mvn clean install` in the todo-app-ui folder. This builds the whole static html application outside the maven target folder (in `/tmp`) - not to download all node modules on every exercise.
+
+The build can be also run manually:
+
+* `npm install` - download dependencies
+* `npm run build` - trigger `browserify` and copy static (html, css) files
+* `mvn clean install -Plocal` - create static resources jar file
+====
+
+IMPORTANT: The automatic build can be problematic on Windows (as most nodejs builds) but manual path is validated and working at least on Windows7.
 
 TIP
 ====

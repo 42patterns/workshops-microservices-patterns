@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example.patterns</groupId>
+        <artifactId>workshop</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>com.example.patterns</groupId>
+    <artifactId>todo-app-ui</artifactId>
+    <packaging>jar</packaging>
+    <name>frontend: javascript ui</name>
+
+    <properties>
+      <node_location>${java.io.tmpdir}${file.separator}microservices</node_location>    
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>external</id>
+            <activation>
+              <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <dist_directory>${node_location}${file.separator}dist/</dist_directory>
+            </properties>
+            <build>
+            <plugins>
+              <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <executions>
+                      <execution>
+                          <id>create-dist-folder</id>
+                          <goals>
+                              <goal>run</goal>
+                          </goals>
+                          <phase>initialize</phase>
+                          <configuration>
+                              <tasks>
+                                <mkdir dir="${node_location}${file.separator}dist" />
+                                <mkdir dir="${node_location}${file.separator}src" />
+                                <mkdir dir="${node_location}${file.separator}node_modules" />
+                                <copy file="package.json" todir="${node_location}" />
+                                <copy file="index.html" todir="${node_location}" />
+                                <copy todir="${node_location}${file.separator}src">
+                                  <fileset dir="src" />
+                                </copy>
+                              </tasks>
+                          </configuration>
+                      </execution>
+                  </executions>
+               </plugin>
+
+                <!-- run the frontend (npm / bower stack) and update dependencies -->
+                <plugin>
+                    <groupId>com.github.eirslett</groupId>
+                    <artifactId>frontend-maven-plugin</artifactId>
+                    <version>1.1</version>
+                    <configuration>
+                        <environmentVariables>
+                          <PROJECT_HOME>${project.basedir}${file.separator}</PROJECT_HOME>
+                        </environmentVariables>
+                        <installDirectory>target</installDirectory>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>install node and npm</id>
+                            <goals>
+                                <goal>install-node-and-npm</goal>
+                            </goals>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <nodeVersion>v8.9.1</nodeVersion>
+                                <npmVersion>5.5.1</npmVersion>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>npm install</id>
+                            <goals>
+                                <goal>npm</goal>
+                            </goals>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <arguments>install --prefix ${node_location}</arguments>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>npm build</id>
+                            <goals>
+                                <goal>npm</goal>
+                            </goals>
+                            <phase>generate-resources</phase>
+                            <configuration>
+                                <arguments>--prefix ${node_location} run build</arguments>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+              </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>local</id>
+            <properties>
+                <dist_directory>dist/</dist_directory>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <!-- copy everything as a webjar -->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/classes/META-INF/resources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${dist_directory}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:a="http://xmlns.jcp.org/jsf/passthrough">
+
+<h:head>
+    <title>Sample todo application</title>
+</h:head>
+<h:body bgcolor="white">
+    <h2>Todos</h2>
+
+    <h:dataTable value="#{todoBean.allTodos}" var="todo">
+        <h:column>
+            <h:form>
+                <h:inputText id="title" value="#{todo.title}"/>
+                <h:commandButton action="#{todoBean.save(todo)}" value="save  "/>
+            </h:form>
+        </h:column>
+        <h:column>
+            <h:form>
+                <h:commandButton action="#{todoBean.remove(todo)}" value="x"/>
+            </h:form>
+        </h:column>
+    </h:dataTable>
+
+    <h:form>
+        <h:outputLabel>Create new todo</h:outputLabel>
+        <h:inputText value="#{todoBean.title}" a:autofocus="true" />
+        <h:commandButton action="#{todoBean.save}" value="Save" />
+    </h:form>
+
+</h:body>
+</html>
