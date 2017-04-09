@@ -16,6 +16,7 @@
     <name>api-gateway: banners-service</name>
 
     <properties>
+        <mainClass>com.example.apigateway.banners.Application</mainClass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -46,24 +47,30 @@
                     <mainClass>${mainClass}</mainClass>
                 </configuration>
             </plugin>
+
+            <!-- Maven Shade Plugin -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>2.3</version>
                 <executions>
+                    <!-- Run shade goal on package phase -->
                     <execution>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <transformers>
+                                <!-- add Main-Class to manifest file -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${mainClass}</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>${mainClass}</mainClass>
-                        </transformer>
-                    </transformers>
-                </configuration>
             </plugin>
         </plugins>
     </build>

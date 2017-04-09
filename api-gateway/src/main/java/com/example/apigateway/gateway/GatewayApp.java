@@ -8,6 +8,7 @@ import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -18,6 +19,8 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -56,6 +59,12 @@ public class GatewayApp {
         return executor;
     }
 
+    @Bean
+    byte[] defaultBanner() throws IOException {
+        InputStream stream = GatewayApp.class.getResource("/default-banner.png").openStream();
+        return StreamUtils.copyToByteArray(stream);
+    }
+
 }
 
 @RestController
@@ -67,9 +76,16 @@ class Controllers {
     @Autowired
     Executor exec;
 
+    @Autowired
+    byte[] defaultBanner;
+
     @RequestMapping(value = "/banners", produces = MediaType.IMAGE_PNG_VALUE)
-    public CompletableFuture<byte[]> getBanners(final HttpServletResponse response) {
+    public CompletableFuture<byte[]> getBanners() {
         final String bannersUrl = "http://localhost:8081/";
+
+        //TODO: on failure return the default banner: "default-banner.png"
+        // from defaultBanner field
+
         return CompletableFuture.supplyAsync(() -> rest.getForObject(bannersUrl, byte[].class), exec);
     }
 
