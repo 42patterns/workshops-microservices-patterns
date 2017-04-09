@@ -70,7 +70,7 @@ class Controllers {
     @RequestMapping(value = "/banners", produces = MediaType.IMAGE_PNG_VALUE)
     public CompletableFuture<byte[]> getBanners(final HttpServletResponse response) {
         final String bannersUrl = "http://localhost:8081/";
-        throw new IllegalStateException("Not implemented!");
+        return CompletableFuture.supplyAsync(() -> rest.getForObject(bannersUrl, byte[].class), exec);
     }
 
     @RequestMapping(value = "/api/**", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -82,16 +82,12 @@ class Controllers {
         final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
         return CompletableFuture.supplyAsync(() -> {
-            //TODO: fill headers
-            HttpHeaders headers = null;
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-            //TODO: build entity
-            HttpEntity<String> entity = null;
-
-            //TODO: make the actual call
-            rest.exchange(legacyApiUrl + path, HttpMethod.resolve(method), entity, String.class);
-
-            throw new IllegalStateException("Not implemented!");
+            return rest.exchange(legacyApiUrl + path, HttpMethod.resolve(method), entity, String.class);
         }, exec);
     }
 
