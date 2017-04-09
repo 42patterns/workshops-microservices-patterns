@@ -93,6 +93,8 @@ IMPORTANT: Implement the missing TODOs in `GatewayApp.java` in the *api-gateway*
 
 === How to run
 
-Run `mvn spring-boot:run` from *api-gateway* project. The gateway listens on the port 9998.
+To start the gateway run `mvn spring-boot:run` from *api-gateway* project. The gateway listens on the port 9999.
+
+Banner service is a simple Spark Java micro framework. Run it from *banners-service* folder with `mvn package exec:java` command.
 
 TIP: Remember that UI has changed (new banners) so UI needs to be rebuilt. If you have problems with building the UI directly with nodejs, install the jar file again (`mvn install:install-file -DgroupId=com.example.patterns -DartifactId=todo-app-ui -Dversion=1.0-SNAPSHOT -Dpackaging=jar -Dfile=todo-app-ui-1.0-SNAPSHOT.jar`) from `todo-app-ui` folder.

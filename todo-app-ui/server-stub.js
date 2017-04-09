@@ -6,6 +6,10 @@ var app = express()
 app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, process.env.NODE_ENV || './dist')));
 
+app.get('/banners', function(req,resp) {
+   resp.sendFile(path.join(__dirname, './default-banner.png'));
+});
+
 app.get('/*', function (req, res) {
     console.log('GET req: ' + req.protocol + '://' + req.get('host') + req.originalUrl)
     console.log('Headers: ' + JSON.stringify(req.headers, null, ' '));

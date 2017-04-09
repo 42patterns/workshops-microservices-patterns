@@ -22,6 +22,8 @@
     <modules>
         <module>todo-app-ui</module>
         <module>todo-app</module>
+        <module>banners-service</module>
+        <module>api-gateway</module>
     </modules>
 
 </project>
