@@ -24,6 +24,7 @@
         <module>todo-app</module>
         <module>banners-service</module>
         <module>api-gateway</module>
+        <module>api-gateway-zuul</module>
     </modules>
 
 </project>

@@ -1,0 +1,19 @@
+server:
+  port: 9998
+
+zuul:
+#  debug:
+#    request: true
+  routes:
+    banners:
+      path: /banners/**
+#      No direct url triggers hystrix and ribbon client (fallbackProvider)
+#      url: http://localhost:8081
+    api:
+      path: /api/**
+      stripPrefix: false
+      url: http://localhost:8080/
+
+banners:
+  ribbon:
+    listOfServers: localhost:8081
