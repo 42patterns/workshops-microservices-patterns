@@ -4,10 +4,19 @@ logging:
   level:
     org.springframework.web.client: DEBUG
 
-#TODO: add ribbon configuration for *all* services used by api-gateway
-#profanity:
-#  ribbon:
-#    eureka:
-#      we don't want to user service discovery - yet
-#      enabled: false
-#    listOfServers: # list all available servers here
+profanity:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: localhost:8090
+legacy:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: localhost:8080
+banners:
+  ribbon:
+    eureka:
+      enabled: false
+    listOfServers: localhost:8081, localhost:8082
+
