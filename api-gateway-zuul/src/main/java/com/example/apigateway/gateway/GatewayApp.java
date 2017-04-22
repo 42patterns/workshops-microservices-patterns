@@ -15,6 +15,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 
 @EnableZuulProxy
@@ -27,11 +28,37 @@ public class GatewayApp {
 
     @Bean
     ZuulFilter writeFilter() {
-        //TODO: implement ZuulFilter - in a similar fashion to the logging filter
-        //filter high order, pre-request for only POST or PUT requests
-        //when filtering change the serviceId in the RequestContext from the original one (legacy)
-        //to the desired profanity-filter
-        throw new IllegalStateException("Not implemented");
+        return new ZuulFilter() {
+            @Override
+            public String filterType() {
+                return "pre";
+            }
+
+            @Override
+            public int filterOrder() {
+                return 0;
+            }
+
+            @Override
+            public boolean shouldFilter() {
+                RequestContext context = RequestContext.getCurrentContext();
+                if (Arrays.asList("PUT", "POST").contains(context.getRequest().getMethod())) {
+                    return true;
+                }
+
+                return false;
+            }
+
+            @Override
+            public Object run() {
+                RequestContext context = RequestContext.getCurrentContext();
+                context.addZuulResponseHeader("X-Profanity", "true");
+                context.set("serviceId", "profanity");
+                context.setRouteHost(null);
+
+                return null;
+            }
+        };
     }
 
     @Bean
