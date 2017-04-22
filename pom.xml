@@ -25,6 +25,8 @@
         <module>banners-service</module>
         <module>api-gateway</module>
         <module>api-gateway-zuul</module>
+        <module>profanity-filter</module>
+        <module>profanity-check-service</module>
     </modules>
 
 </project>

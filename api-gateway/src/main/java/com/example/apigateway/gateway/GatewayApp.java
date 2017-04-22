@@ -12,13 +12,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -80,6 +83,8 @@ class Controllers {
 
     @RequestMapping(value = "/banners", produces = MediaType.IMAGE_PNG_VALUE)
     public CompletableFuture<byte[]> getBanners() {
+
+        // TODO: externalize ip/port configuration to the configuration file
         final String bannersUrl = "http://localhost:8081/";
 
         final RetryPolicy rt = new RetryPolicy()
@@ -88,17 +93,43 @@ class Controllers {
                 .withMaxRetries(2);
 
         return CompletableFuture.supplyAsync(() -> Failsafe.with(rt)
-                    .withFallback(defaultBanner)
-                    .get(() -> rest.getForObject(bannersUrl, byte[].class)), exec);
+                .withFallback(defaultBanner)
+                .get(() -> rest.getForObject(bannersUrl, byte[].class)), exec);
+    }
+
+    @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST},
+            value = "/api/**", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CompletableFuture<ResponseEntity<String>> profanityProxy(@RequestBody(required = false) String payload,
+                                                                    final HttpServletRequest request) {
+
+        // TODO: externalize ip/port configuration to the configuration file
+
+        final String profanityProxy = "http://localhost:8090/";
+        final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(profanityProxy)
+                .path(path).build().toUri();
+
+        return makeCall(uri, payload.toString(), request);
     }
 
     @RequestMapping(value = "/api/**", produces = MediaType.APPLICATION_JSON_VALUE)
     public CompletableFuture<ResponseEntity<String>> legacyTodos(@RequestBody(required = false) String payload,
-                                                                final HttpServletRequest request) {
-        final String legacyApiUrl = "http://localhost:8080/";
+                                                                 final HttpServletRequest request) {
 
-        final String method = request.getMethod();
+        // TODO: externalize ip/port configuration to the configuration file
+
+        final String legacyApiUrl = "http://localhost:8080/";
         final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+
+        URI uri = UriComponentsBuilder.fromHttpUrl(legacyApiUrl)
+                .path(path).build().toUri();
+
+        return makeCall(uri, payload, request);
+    }
+
+    private CompletableFuture<ResponseEntity<String>> makeCall(URI uri, String payload, final HttpServletRequest request) {
+        final String method = request.getMethod();
 
         return CompletableFuture.supplyAsync(() -> {
             HttpHeaders headers = new HttpHeaders();
@@ -106,8 +137,9 @@ class Controllers {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(payload, headers);
 
-            return rest.exchange(legacyApiUrl + path, HttpMethod.resolve(method), entity, String.class);
+            return rest.exchange(uri, HttpMethod.resolve(method), entity, String.class);
         }, exec);
+
     }
 
 }
