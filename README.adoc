@@ -120,4 +120,17 @@ TIP: As the service provides an image directly, same "data structure" must be pr
 TIP: Failsafe documentation (https://github.com/jhalterman/failsafe) is a nice guide for different implemantation flavours.
 
 IMPORTANT: Provide a default fallback option in the `GatewayApp#getBanners()` method.
->>>>>>> 8f73ef4... Readme: circuit-breaker
+
+=== Task #{counter:exercise}
+
+While writing your own API Gateway might be a good idea, sometimes it becomes a bit cumbersome.
+There are multiple out of the box libraries implementing this pattern (like Neflix Zuul).
+
+Zuul provides configurable tooling for building a reverse proxy, especially with some Spring Cloud conventions.
+Additionally, it comes with circuit breaking and load balancing mechanism provided by another Netflix libraries: Hystrix and Ribbon (we will look deeper into these later on).
+
+IMPORTANT: Provide a default fallback mechanism (similar to the _in-house built_ *api-gateway* from the previous task. Please use `ZuulFallbackProvider` interface and provide it as a standard spring bean.
+
+=== How to run
+
+Run `mvn spring-boot:run` from *api-gateway-zuul* project. The gateway listens on the port 9999.
