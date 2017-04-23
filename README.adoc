@@ -98,3 +98,26 @@ To start the gateway run `mvn spring-boot:run` from *api-gateway* project. The g
 Banner service is a simple Spark Java micro framework. Run it from *banners-service* folder with `mvn package exec:java` command.
 
 TIP: Remember that UI has changed (new banners) so UI needs to be rebuilt. If you have problems with building the UI directly with nodejs, install the jar file again (`mvn install:install-file -DgroupId=com.example.patterns -DartifactId=todo-app-ui -Dversion=1.0-SNAPSHOT -Dpackaging=jar -Dfile=todo-app-ui-1.0-SNAPSHOT.jar`) from `todo-app-ui` folder.
+
+== Circuit breaking
+
+image::tasks-banner_service.png[]
+
+The quality of the *banners-service* is below expectations and it fail frequently.
+
+=== Context
+
+The ads providing services goes offline on regular basis.
+From _TODO application(TM)_ perspective this is not acceptable, as if results in a broken image icon on the front page.
+To mitigate that, a `default-banner.png` has been provided to substitute the missing image.
+
+=== Task #{counter:exercise}
+
+In the *api-gateway* implementation provide a fallback for a missing image (either on exception of with a dedicated tool like Hystrix or Failsafe).
+
+TIP: As the service provides an image directly, same "data structure" must be provided by the fallback mechanism (`byte[]`)
+
+TIP: Failsafe documentation (https://github.com/jhalterman/failsafe) is a nice guide for different implemantation flavours.
+
+IMPORTANT: Provide a default fallback option in the `GatewayApp#getBanners()` method.
+>>>>>>> 8f73ef4... Readme: circuit-breaker
