@@ -1,0 +1,62 @@
+= Distilling microservices patterns
+:imagesdir: https://raw.githubusercontent.com/kubamarchwicki/workshops-microservices-patterns/master/_slides/src/images/
+:toc:
+
+Welcome to microservices patterns workshop.
+This workshop is intended to guide you through multiple microservice patterns, based on modularising a simplistic _TODO application(TM)_.
+
+== Before we start
+
+For sanity, when setting up a new task, start with `mvn install` with the parent `pom.xml`
+
+To pre-download _half of internet_ of Maven dependencies, you can go to link:https://github.com/42patterns/training-deps[training dependencies repository] and follow the instructions. This will force download most (or all) dependencies used in the exercises.
+
+== Splitting up monoliths
+
+image::tasks-external_ui.png[]
+
+There is a TODO application: two independent services talking over HTTP (REST): *todo-app* and *todo-app-ui*
+
+=== Context
+
+The *todo-app*(TM) is a simple TODO application built in a old-school way: EJB components with servlets and JSF sitting on a single application server (wildfly).
+You can run the server with `mvn wildfly:run` and _play a bit with the app_ by browsing to http://localhost:8080/index.jsf
+
+However, as the business evolves - the UI is planned to be replaced by a modern, JavaScript based frontend application. As a part of refactoring initiative a new front-end has be designed and implemented: `todo-ui`, which is a Single Page Application, with an idea to communicate with the old application through a set of REST-like HTTP calls.
+The front end can be run independently by running `npm start` from *todo-app-ui* folder.
+
+=== Task #{counter:exercise:0}
+
+Make it run!
+
+If you navigate to http://localhost:8080 you can see the new UI in place. It's deployed as independent a resource-jar file (Servlet 3.0) and it mock the real todo list behaviour. Whenever new item is added, it's not persisted and disappears upon refresh.
+
+However, first step is done: legacy application is combined with the new UI.
+
+=== Task #{counter:exercise}
+
+Based on the defined interfaces, extend the existing application and provide a set of required API.
+
+What additional changes needs to be done to allow application to application communication, when deployed separately? How can the application still be developed separately but deployed as a monolith?
+
+IMPORTANT: Implement the missing methods in the `TodoResource` class for the test to successfully pass.
+
+=== How to run
+
+The Pact is prepared by the JavaScript application. It states the expectation; what resources are expected from the provider.
+
+It's expressed as a Pact contract created in the test phase. The pact is than passed over to provider.
+
+The pact file is located in `todo-app/src/test/resources`. An Arquillian test is built to validate the contract (`TodoResourceProviderIT`)
+
+The test is run as a part of Intergration Testing phase which can be triggered with Maven's `mvn clean verify`. It spins wildfly instance on pre-integration phase and stops it during post-integration phase.
+
+TIP: The missing UI artifact `com.example.patterns:todo-app-ui` can be buld with `mvn clean install` in the todo-app-ui folder.
+
+TIP
+====
+If you experience some nodejs issues while building the frontend application you can install it directly from file `mvn install:install-file -DgroupId=com.example.patterns -DartifactId=todo-app-ui -Dversion=1.0-SNAPSHOT -Dpackaging=jar -Dfile=todo-app-ui-1.0-SNAPSHOT.jar` when in folder `todo-app-ui`
+
+Afterwards, you can build the whole project without `todo-app-ui` with maven `mvn clean install -pl !todo-app-ui`
+====
+
