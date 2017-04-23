@@ -71,3 +71,28 @@ If you experience some nodejs issues while building the frontend application you
 Afterwards, you can build the whole project without `todo-app-ui` with maven `mvn clean install -pl !todo-app-ui`
 ====
 
+== API Gateway
+
+image::tasks-banner_service.png[]
+
+The _TODO application(TM)_ become a great success, so that business wants to monetize the business by adding commercial banners on the top of the page.
+
+=== Context
+
+A new service has been added to the pool: a todo page displays a commercial banner provider directly from a service owned by the marketing department.
+The functionality is provided by a *banners-service* service, which is a _full stack microservice_ - provides a random image, ready to include directly onto the todo page.
+
+=== Task #{counter:exercise}
+
+Introduce an API gateway - a new component which hosts the UI and routes appropriate requests to services:
+
+- `/banners/&lowast;&lowast;` are forwarded to the *banners-service* (http://localhost:8081)
+- `/api/&lowast;&lowast;` calls are forwarded to the legacy application - *todo-app* (http://localhost:8080)
+
+IMPORTANT: Implement the missing TODOs in `GatewayApp.java` in the *api-gateway* project
+
+=== How to run
+
+Run `mvn spring-boot:run` from *api-gateway* project. The gateway listens on the port 9998.
+
+TIP: Remember that UI has changed (new banners) so UI needs to be rebuilt. If you have problems with building the UI directly with nodejs, install the jar file again (`mvn install:install-file -DgroupId=com.example.patterns -DartifactId=todo-app-ui -Dversion=1.0-SNAPSHOT -Dpackaging=jar -Dfile=todo-app-ui-1.0-SNAPSHOT.jar`) from `todo-app-ui` folder.
