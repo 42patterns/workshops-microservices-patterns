@@ -7,10 +7,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 import org.springframework.cloud.netflix.zuul.filters.route.ZuulFallbackProvider;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -52,11 +55,52 @@ public class GatewayApp {
 
     @Bean
     ZuulFallbackProvider fallbackProvider() throws URISyntaxException, IOException {
-        //TODO: get location for the default banner file
-        final InputStream stream;
+        final InputStream stream = GatewayApp.class.getResource("/default-banner.png").openStream();
 
-        //TODO: return the file content as a part of implementation of ZuulFallbackProvider
-        throw new IllegalStateException("Not implemented!");
+        return new ZuulFallbackProvider() {
+            @Override
+            public String getRoute() {
+                return "banners";
+            }
+
+            @Override
+            public ClientHttpResponse fallbackResponse() {
+
+                return new ClientHttpResponse() {
+                    @Override
+                    public HttpStatus getStatusCode() throws IOException {
+                        return HttpStatus.OK;
+                    }
+
+                    @Override
+                    public int getRawStatusCode() throws IOException {
+                        return 200;
+                    }
+
+                    @Override
+                    public String getStatusText() throws IOException {
+                        return "OK";
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+
+                    @Override
+                    public InputStream getBody() throws IOException {
+                        return stream;
+                    }
+
+                    @Override
+                    public HttpHeaders getHeaders() {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.IMAGE_PNG);
+                        return headers;
+                    }
+                };
+            }
+        };
     }
 
 }
