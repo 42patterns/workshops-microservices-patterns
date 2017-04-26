@@ -164,3 +164,50 @@ In the *api-gateway-zuul* provide a static list of servers for each service (in 
 Additionally, add an appropriate filter configuration (implementing `ZuulFilter`), to check `POST` or `PUT` requests and forward them to *profanity-filter* instead of the original *legacy* _TODO Application_(TM).
 
 IMPORTANT: Configure Netflix Zuul to evenly distribute load between all service instances.
+
+== Service discovery
+
+image::tasks-discovery.png[]
+
+The number of hardcode service locations (hostnames and/or ports) is unacceptably low: it make the deployments static and fragile.
+What is more, some ports are assigned randomly which makes the situation additionally complex.
+
+=== Context
+
+Eureka is a REST based service that is used for the purpose of load balancing and failover of middle-tier servers.
+When the number of services and instances increases greatly, it's impossible to manage embedded configuration.
+Eureka inverses this process, allowing service registrations as well as pulling the latest service location directly from store.
+
+In the our microservices environment the *profranity-filter* and *todo-app* are already auto registered.
+
+The *profanity-filter* combines both automatic configuration (with `@EnableDiscoveryClient`) and manual configuration of services which are external (thus - don't register themselves).
+The latter is done through explicit `@RibbonClient` annotation.
+
+Finally, both *banners-service* and *todo-app* are not a spring applications, therefor require additional steps to register with Eureka.
+
+The *todo-app* did it through explicit call to Eureka HTTP service (see the `DiscoveryClientConfig` bean).
+
+The *banner-service* registration is done with the Eureka Client.
+
+TIP: Original Eureka Client example might be helpful to proceed: https://github.com/Netflix/eureka/tree/master/eureka-examples
+
+TIP: Besides Eureka Client dependency `com.netflix.eureka:eureka-client:1.6.2`, add `javax.inject:javax.inject:1` which is used for client's dependency injection engine.
+
+TIP: link:https://github.com/Netflix/eureka/wiki/Eureka-REST-operations[Eureka REST operations] and link:https://github.com/Netflix/eureka/wiki/Understanding-eureka-client-server-communication[description of client-server communication] might be helpful for debugging and manual cancellation
+
+NOTE: It takes time to propagate new instance within Eureka ecosystem; from instance registration to local load balancer (_ribbon_) cache. An detailed description (inluding configuration options) is available link:https://github.com/spring-cloud/spring-cloud-netflix/issues/373#issuecomment-110331739[on github].
+
+=== Task #{counter:exercise}
+
+To make the configuration consistent, introduce service discovery features in the rest of the services.
+*api-gateway* (or *api-gateway-zuul*) can leverage Spring Cloud autoconfiguration.
+
+TIP: The Spring's quickstart manual can give you heads up: https://spring.io/guides/gs/service-registration-and-discovery/
+
+IMPORTANT: Auto register the *api-gateway* through `@EnableDiscoverClient` annotation.
+
+=== How to run
+
+Run the discovery service through `mvn spring-boot:run -f registry`.
+
+TIP: Lookup registered application at http://localhost:8761/eureka/apps
