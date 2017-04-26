@@ -37,8 +37,9 @@ public class Application {
 
         port(port);
         staticFileLocation("/webapp");
-
         exception(Exception.class, (exception, request, response) -> exception.printStackTrace());
+
+        //TODO: register w Eureka
 
         get("/", (req, resp) -> {
 

@@ -29,6 +29,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
+//TODO: @EnableDiscoveryClient
 public class GatewayApp {
 
     /*
