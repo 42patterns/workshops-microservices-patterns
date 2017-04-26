@@ -134,3 +134,33 @@ IMPORTANT: Provide a default fallback mechanism (similar to the _in-house built_
 === How to run
 
 Run `mvn spring-boot:run` from *api-gateway-zuul* project. The gateway listens on the port 9999.
+
+== Load balancing
+
+image::tasks-profanity.png[]
+
+No profane words should be allowed in the *todo-app*; everything matching profanity checks should be filtered-out.
+
+=== Context
+
+Additional service (*profnity-filter*) has been introduced in the application landscape.
+It handles `POST` or `PUT` calls, checks profanity with an external *profanity-check-service*, amends the title (if required) and passes the request to the *legacy* _TODO Application_(TM).
+
+=== Task #{counter:exercise}
+
+For performance reasons more than one *banners-service* service can be started multiple times and the load should be evenly distributed between all services.
+The *banners-service* service listens on port 8081 by default, but it can be configured with `-DPORT {port number}` parameter (to avoid ports collision).
+
+Start multiple instances of banners service and distribute the workload evenly between all available instances of *banners-service*.
+
+TIP: A quickstart reference manual from Spring is available here: https://spring.io/guides/gs/client-side-load-balancing/
+
+IMPORTANT: In the *api-gateway* application, use the Spring based RibbonClient (from `spring-cloud-starter-ribbon`) to easily load balance between instances. The static list of servers can be added in the application configuration file.
+
+=== Task #{counter:exercise}
+
+As our in-house implemented *api-gateway* is getting a bit more complex, maybe it's a good moment to have a look deeper look into out of the box tooling.
+In the *api-gateway-zuul* provide a static list of servers for each service (in the `application.properties` file - in a similar fashion it was done for *api-gateway*).
+Additionally, add an appropriate filter configuration (implementing `ZuulFilter`), to check `POST` or `PUT` requests and forward them to *profanity-filter* instead of the original *legacy* _TODO Application_(TM).
+
+IMPORTANT: Configure Netflix Zuul to evenly distribute load between all service instances.
