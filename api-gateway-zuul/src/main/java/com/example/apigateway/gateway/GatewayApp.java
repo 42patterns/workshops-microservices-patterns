@@ -26,6 +26,15 @@ public class GatewayApp {
     }
 
     @Bean
+    ZuulFilter writeFilter() {
+        //TODO: implement ZuulFilter - in a similar fashion to the logging filter
+        //filter high order, pre-request for only POST or PUT requests
+        //when filtering change the serviceId in the RequestContext from the original one (legacy)
+        //to the desired profanity-filter
+        throw new IllegalStateException("Not implemented");
+    }
+
+    @Bean
     ZuulFilter zuulFilter(){
         //uncomment zuul.debug.request = true in configuration to unable rouingDebug dump
         return new ZuulFilter() {
