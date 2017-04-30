@@ -1,5 +1,11 @@
 package com.example.apigateway.banners;
 
+import com.netflix.appinfo.ApplicationInfoManager;
+import com.netflix.appinfo.InstanceInfo;
+import com.netflix.appinfo.MyDataCenterInstanceConfig;
+import com.netflix.appinfo.providers.EurekaConfigBasedInstanceInfoProvider;
+import com.netflix.discovery.DefaultEurekaClientConfig;
+import com.netflix.discovery.DiscoveryClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +33,7 @@ public class Application {
     private static final Integer port = valueOf(ofNullable(getProperty(PORT_PROPERTY))
             .orElse("8081"));
 
+<<<<<<< HEAD
     public static void main(String[] args) throws Exception {
 
         // Load zip specific filesystem provider when run from inside a fat-jar
@@ -35,11 +42,16 @@ public class Application {
             FileSystems.newFileSystem(uri, emptyMap());
         }
 
+=======
+    public static void main(String[] args) {
+        //setup Eureka
+        ApplicationInfoManager applicationInfoManager = setupEurekaClient();
+
+        //setup SparkJava application
+>>>>>>> 98488c4... Service discovery: registering banners-service through eureka-client
         port(port);
         staticFileLocation("/webapp");
         exception(Exception.class, (exception, request, response) -> exception.printStackTrace());
-
-        //TODO: register w Eureka
 
         get("/", (req, resp) -> {
 
@@ -62,6 +74,35 @@ public class Application {
             return raw;
         });
 
+        //wait for SparkJava application to initialize
+        awaitInitialization();
+
+        //change Eureka status to UP (from STARTING)
+        applicationInfoManager.setInstanceStatus(InstanceInfo.InstanceStatus.UP);
+    }
+
+    private static ApplicationInfoManager setupEurekaClient() {
+        DynamicPortInstanceConfig instanceConfig = new DynamicPortInstanceConfig(port);
+
+        InstanceInfo instanceInfo = new EurekaConfigBasedInstanceInfoProvider(instanceConfig).get();
+        ApplicationInfoManager applicationInfoManager = new ApplicationInfoManager(instanceConfig, instanceInfo);
+        applicationInfoManager.setInstanceStatus(InstanceInfo.InstanceStatus.STARTING);
+        new DiscoveryClient(applicationInfoManager, new DefaultEurekaClientConfig());
+
+        return applicationInfoManager;
+    }
+
+    private static class DynamicPortInstanceConfig extends MyDataCenterInstanceConfig {
+        private final Integer port;
+
+        private DynamicPortInstanceConfig(Integer port) {
+            this.port = port;
+        }
+
+        @Override
+        public int getNonSecurePort() {
+            return port;
+        }
     }
 
 }
