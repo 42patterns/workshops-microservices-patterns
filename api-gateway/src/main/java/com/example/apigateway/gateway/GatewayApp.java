@@ -5,6 +5,7 @@ import net.jodah.failsafe.RetryPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
@@ -29,7 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
-//TODO: @EnableDiscoveryClient
+@EnableDiscoveryClient
 public class GatewayApp {
 
     /*

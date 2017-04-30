@@ -56,7 +56,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-ribbon</artifactId>
+            <artifactId>spring-cloud-starter-eureka</artifactId>
         </dependency>
     </dependencies>
 

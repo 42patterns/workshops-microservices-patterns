@@ -1,22 +1,9 @@
+spring:
+  application:
+    name: api-gateway
+
 server:
   port: 9999
 logging:
   level:
     org.springframework.web.client: DEBUG
-
-profanity:
-  ribbon:
-    eureka:
-      enabled: false
-    listOfServers: localhost:8090
-legacy:
-  ribbon:
-    eureka:
-      enabled: false
-    listOfServers: localhost:8080
-banners:
-  ribbon:
-    eureka:
-      enabled: false
-    listOfServers: localhost:8081, localhost:8082
-
