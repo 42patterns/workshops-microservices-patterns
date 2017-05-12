@@ -1,0 +1,22 @@
+= Distilling Microservices Patterns
+
+.Workshop description
+Microservies. Everybody is talking about microservices. Everybody says they do microservces. The definition of microservice architecture is quite broad and vague: functional decoupling into discrete services, hence the number of approaches, with different flavors and implementations is so great - everybody can do microservices differently.
+
+Fact is, not everything needs to stand as autonomous Java applications communicating over HTTP with JSON as a transport language. Different architectures compromises different elements - which is great and show
+the true flexibility of the approach. However, regardless of implementation there is a set of practices that should be present in all solutions.
+
+.What you will learn
+During the workshop we will distill, name a couple of patterns and play with an example implementation of:
+
+* service registers and discovery
+* circuit breakers
+* consumer driven contracts
+* centralized logging and monitoring
+* approaches in front-end web architecture
+
+.Experience required
+We will be playing with multiple different stack for microservices so general knowledge of Java with some framework experience is required.
+
+.Environment
+Bring your own laptop with Java8 + Maven. Any Java IDE is sufficient. Docker is optional, for providing some third party infrastructure like authorisation servers, logs injections etc. Prior workshop participants will receive a project to download all required dependencies.
