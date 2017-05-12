@@ -1,0 +1,98 @@
+= Pattern #{counter:patterns}: Service orchestration
+:figure-caption!:
+
+****
+As we start to model more and more complex logic, we have to deal with the problem of managing business processes that stretch across the boundary of individual services
+****
+
+== Problem
+
+Orchestration::
+* Single point of failure
+* Bottleneck
+
+Choreography::
+* Eventual consistency
+* Nondeterministic behaviour
+
+== Discussion
+
+.Application flow
+image::patterns-orchestration-cc803.png[width=55%]
+
+== Ochestration
+
+* Relies on _central brain_ which guides and drives the process
+** Flowchart can be taken directly to code
+* Potential bottle neck or single point of failure
+** Easy to reflect application flow / logic in code
+** Easiest to implement and maintain (monitor)
+** Hardest to scale
+* Possible to leverage dedicated instrumentation and visualisation tools
+** Rules engines / business process management
+* Implied synchronous requets / response on every step of the process
+
+[%notitle]
+== Orchestration
+
+image::patterns-orchestration-fe459.png[]
+
+== Choreography
+
+* Each step is notified about expectations and let it figure out the details
+** Event based communication
+** Services emit asynchronous events
+* Potential non-deterministic behaviour
+** Eventually consistent application state
+* Decoupling solution
+** Naturally scalable
+** If more subscribers are interested in particular event no additional work is required in the _Customer service_
+* Additional effort on monitoring and tracking the right behaviour
+
+[%notitle]
+== Choreography
+
+image::patterns-orchestration-76d6b.png[]
+
+
+== Implementation
+
+* Asynchronous, nonblocking I/O
+** Dedicated thread pool (dedicated `ExecutorService`)
+* CompletableFuture
+* RxJava
+* JDeferred (_Deferred/Promise library similar_)
+
+== !
+
+image::file:///home/kubam/workspaces/slides/microservices-3camp/build/asciidoc/revealjs/images/flavours-json-over-http.png[background="white"]
+
+== !
+
+[source, java]
+----
+CompletableFuture<Boolean> isObscene = CompletableFuture
+    .supplyAsync(() -> profanity.checkProfanity(phrase));
+
+CompletableFuture<Optional<DictionaryWord>> noTranslation =
+    CompletableFuture.completedFuture(Optional.empty());
+
+CompletableFuture<Optional<DictionaryWord>> maybeDictTranslation =
+    CompletableFuture.supplyAsync(() -> dict.translate(phrase));
+
+CompletableFuture<Optional<DictionaryWord>> maybeBablaTranslation =
+    CompletableFuture.supplyAsync(() -> babla.translate(phrase));
+
+CompletableFuture<Optional<DictionaryWord>> takeFirst =
+    maybeDictTranslation.applyToEither(maybeBablaTranslation, Function.identity());
+
+CompletableFuture<Optional<DictionaryWord>> future =
+    isObscene.thenCompose(b -> b ? noTranslation: takeFirst);
+
+Optional<DictionaryWord> word = future.join();
+System.out.println("translate = " + word);
+----
+
+== !
+
+image::file:///home/kubam/workspaces/slides/microservices-3camp/build/asciidoc/revealjs/images/flavours-event-broker.png[background="white"]

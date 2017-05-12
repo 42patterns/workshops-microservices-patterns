@@ -1,0 +1,20 @@
+== ActivityId
+
+* Every customer request matters
+* Every request is unique
+* Every request creates a chain (or tree) of calls/events
+* Activities are correlated
+* You need an ActivityId (or CorrelationId) to link calls/events
+
+.Request
+----
+GET /api/v2/foo HTTP/1.1
+host: foo.com
+activity-id: 96c5a1f106ce468ebcca8303ed7464bd
+----
+
+.Response
+----
+200 OK
+activity-id: 96c5a1f106ce468ebcca8303ed7464bd
+----

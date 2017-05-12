@@ -1,0 +1,83 @@
+= Pattern #{counter:patterns}: Consumer driven contracts
+:figure-caption!:
+
+****
+Early verification of expectations of a consumer (or producer) on a service
+****
+
+== Intent
+
+Consumer Driven Contracts drives the development of the Provider from its Consumers point of view, which means consumer describes what and how it wants to receive the information (in a form of a contract) and then provider implements the service following the given contract.
+It allows testing interactions between service providers and consumers in isolation against a contract.
+
+{zwsp}
+
+As producers::
+We	are	trying	to	ensure	that	when	we	deploy	a	new	service	to
+production,	our	changes	won’t	break	consumers.
+As consumers::
+We want to know early (design-time, not runtime) that producer is changing.
+
+== Problem
+
+* In-process calls (methods, services, `@Local` EJBs) are replaced with out-of-process calls (HTTP, AMPQ)
+* In microservices environments, different services are no longer wired together under the same runtime. Changes in the exposed interfaces for these services can no longer be caught by the compiler.
+** Without the necessary precautions, there are a lot of ways these interactions can be broken by changes made in the different services
+
+[quote]
+(...) gives you the certainty that the stubs that you’re using were created by the service that you’re calling. Also if you can use them it means that they were tested against the producer’s side. In other words - you can trust those stubs.
+
+// http://techblog.newsweaver.com/why-should-you-use-consumer-driven-contracts-for-microservices-integration-tests/
+
+== Discussion
+
+image::consumer-driven-contracts-a4a80.png[width="50%"]
+
+Things that can go with integration like this::
+* Change of the endpoint URL (e.g. GET `/stockLevels` renamed to GET `/stockLevel`)
+* Change in the expected parameters (e.g. GET `/stockLevels` expecting a new mandatory `category` field)
+* Change in the response payload (returns an `array`, instead of having an `array` wrapped in an `object`)
+
+== Structure
+
+. The consumer defines what it expects from a specific request to a service
+** In a way accepted both for consumer and producer
+. The provider and the consumer agree on this contract
+** Provider needs to know about the tests, validate them
+** Consumers and provider might have to agree on some form of common state (if the provider is not stateless or depends on other services)
+. The provider continuously verifies that the contract is fulfilled
+
+== !
+
+image::consumer-driven-contracts-ba2f9.png[]
+
+== !
+
+image::consumer-driven-contracts-e4bed.png[]
+
+== !
+
+image::consumer-driven-contracts-ca9ec.png[]
+
+== Don't share libraries - share contracts
+
+image::https://image.slidesharecdn.com/geecon2016-scalingmicroservicesatgilt-160519132206/95/geecon-2016-scaling-microservices-at-gilt-54-638.jpg?cb=1463664274[]
+
+== Generate client based on a API docs
+
+image::https://image.slidesharecdn.com/geecon2016-scalingmicroservicesatgilt-160519132206/95/geecon-2016-scaling-microservices-at-gilt-55-638.jpg?cb=1463664274[]
+
+== Example
+
+Known implementations::
+* https://docs.pact.io/
+* http://thoughtworks.github.io/pacto/
+* https://github.com/spring-cloud/spring-cloud-contract
+* http://arquillian.org/arquillian-pact/
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb}: Splitting up monoliths
+****

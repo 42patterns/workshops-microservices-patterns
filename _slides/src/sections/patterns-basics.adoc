@@ -1,0 +1,44 @@
+= Microservices recap
+
+== Why miroservices?
+
+* Better scaling (of people not solutions)
+* Decentralizing decisions
+* Frequent deployments
+* Reduced local complexity
+** What about overall complexity? But...
+
+== Problems we had
+
+* Builds which takes forever
+* Deployments which takes forever
+* Implementation of a features which takes forever
+* MTTRF (mean time to resolve failure) damaging organization reputation
+* Atomic releases, you need to wait until all features are complete to release
+* In case of failure you rollback all changes, even these ones which worked
+
+== Problems we have
+
+* No-one completely grasp the whole solutions. But is it a bad thing?
+* Mind-shift requiring *new operating model*
+* When things goes wrong it first the *where* problem rather than *why*?
+* Potential increase in latency
+
+== Conway's Law
+
+[quote ,M. Conway]
+""
+Any organization that designs a system (defined broadly) will produce a design whose structure is a copy of the organization’s communication structure.
+""
+
+== How are we solving it?
+
+// TODO: rozwinąć te punkty np na bazie książki Bonera - Reactive_Microservices_Architecture
+
+* Failure isolation - _bulkheading_
+* Autonomous services - service promises its own behaviour by publishing
+its protocol/API
+* Single responsibility - encapsulate a single concept
+* State ownership
+* Asynchronous, message based communication
+* Location transparency

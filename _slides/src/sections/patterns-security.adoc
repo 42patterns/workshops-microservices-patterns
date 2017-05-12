@@ -1,0 +1,121 @@
+= Pattern #{counter:patterns}: Application security
+:figure-caption!:
+
+****
+Don't reinvent the wheel. Security is so critical that in most cases you want to trust code written by companies that are in the business of security.
+****
+
+// http://presos.dsyer.com/decks/microservice-security.html#slide29
+// https://techbeacon.com/8-best-practices-microservices-security
+
+////
+
+== Nomenklatura
+
+Service Provider (Resource Server)::
+Serwer udostępniający zasoby
+
+Client::
+Użytkownik korzystający z *Service Provider*
+
+Identity Provider (Authorization Server)::
+Przechowuje torżsamość użytkownika (klienta)
+
+[%notitle]
+== SAML (2)
+
+image::https://d9s067m9cf0lb.cloudfront.net/assets/2013/04/09/saml2-flow-b931b212fbd9ba9819e72688dc69117fd5eb20e6a1adf1da3a28e441c789c862.png[]
+
+== Problemy z SAML
+
+* XML SAML:Assertions
+* Zorientowane na typowe strony WWW (formulerz, przekierowanie)
+* Bindings: HTTP Redirect i HTTP POST
++
+[quote]
+Longer messages (e.g., those containing signed SAML assertions) should be transmitted via other bindings such as the HTTP POST Binding.
+* HTTP POST jest problemowe (lub niemożliwe do implementacji) w przypadku aplikacji mobilnych
+
+
+////
+
+== OAuth2
+
+== !
+
+image::https://d9s067m9cf0lb.cloudfront.net/assets/2013/04/09/oauth2-flow-582c313da600c1cc19b5076e86ed70a49b91f9cfc641af0d1c408e5760d12cba.png[width=80%]
+
+// == OAuth2
+
+// * Całość komunikacji opiera się na HTTP Redirect
+// * Token przekazywany jest jako parametr (_query param_)
+// * Nie ma jakichkolwiek założeń co do natury klienta (strona www)
+// * Służy tylko do uwierzytelnienia (_authentication_)
+
+
+
+== JWT
+
+== !
+
+image::https://cdn.auth0.com/content/jwt/jwt-diagram.png[]
+
+== JWT (2)
+
+* Self-contained - zawierają wszystkie potrzebne informacje
+* Działają pomiędzy różnymi środowiskami (językami programowania)
+* Łatwe do przesyłania jako element URL lub nagłówek
+
+== JWT - struktura (1)
+
+* header (base64)
++
+[source, json]
+----
+{
+  "typ": "JWT",
+  "alg": "HS256"
+}
+----
+* payload (JWT Claims: registered, public and private)
++
+[source, json]
+----
+{
+  "iss": "scotch.io", <!--1-->
+  "exp": 1300819380,
+  "name": "Jakub",
+  "admin": true  <!--2-->
+}
+----
+
+== JWT - struktura (2)
+
+* signature
+
+[source, javascript]
+----
+var encodedString = base64UrlEncode(header)
+		+ "."
+		+ base64UrlEncode(payload);
+
+HMACSHA256(encodedString, 'secret');
+----
+
+== Security and CSRF
+
+. Token is stored at the client side and is subject to theft
+* LocalStorage can be accessed through XSS attacks
+* Cookies can be used during CSRF (impersonalisation)
+. Server needs to ensure that the token is coming from a trustworthy side
+* JWT token is stored in `HttpOnly` cookie and transfered via HTTPS
+* Verification of `origin` and `referrer` - attacks coming from different domains
+* Additional data (JWT signature) stored in _non-standard cookie_and transfer as HTTP Header (`X-XSRF-TOKEN`)
+. When the client submits both elements the consistency is checked (origin and modifications) - *Double Submit Cookies Method*
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb}: Security
+****

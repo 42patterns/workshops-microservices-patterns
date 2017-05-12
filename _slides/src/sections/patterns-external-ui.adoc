@@ -1,0 +1,85 @@
+= Pattern #{counter:patterns}: Externalized UI
+
+****
+Leaving user interface for web developers
+****
+
+== Intent
+
+In order to have a meaningful and valuable user experience, information must be
+
+. *Useful*: Your content should be original and fulfill a need
+. *Usable*: Site must be easy to use
+. *Desirable*: Image, identity, brand, and other design elements are used to evoke emotion and appreciation
+. *Findable*: Content needs to be navigable and locatable on-site and off-site
+. *Accessible*: Content needs to be accessible to people with disabilities(+ Inclusive)
+. *Credible*: Users must trust and believe what you tell them
+
+== Problem
+
+Refreshing frontend::
+* Stack changes (migrating from JSP, JSF, Struts 1.x, GWT - you call it)
+* Hard to find th right people.
+** Full-stack that goes beyond backend and frontend in JavaScript
+* Stack incompatibility
+** Need to know Java to do JavaScript (GWT)
+** Need to know Maven to build the application
+** _Save - redeploy - refresh_ vs. _Save - refresh_
+
+== Discussion
+
+* Duality of the technology stack
+** NodeJS + npm + bower + webpack ...
+** Java + Maven / Gradle / ...
+* Nobody wants JSF...
+
+== !
+
+Needs and tools mismatch::
+* some features and impossible _(or unbelievably expensive)_
+** 30 days for simple button change
+** working against the framework, not together with it
+* look-and-feel expectations
+** free canvas vs. component based approach
+** Material Design vs Adobe Flex UI Components
+
+== !
+
+Organizational shift::
+* unable to find the right people for the job
+** different aesthetics between backend engineers and frontend engineers
+** the myth of full stack developer
+* new roles (User Experience Designer)
+** old communication problems (us vs. them)
+
+== Structure - Build process
+
+* Maven
+** Orchestrate external build process through Maven
+** Collect results into a single distribution
+** JAR, Zip - you call it
+* From server perspective the whole JavaScript is 'rather static'
+
+== Structure - Deployment
+
+* What was created in the previous step is actually a _WebJar_
+** A client-side web library packaged into JAR (Java Archive) file
+* _Servlet 3.0_ specification prescribes way to server static assets from Jar files
+** the WebJars that are in the `WEB-INF/lib` directory are automatically made available as static resources
+** this works because anything in a `META-INF/resources` directory in a JAR in `WEB-INF/lib` is automatically exposed as a static resource.
+* The WebJar needs to be a dependency of the application
+
+== Structure - Splitting the application
+
+. Split EARs into multiple WARs
+. One application per server
+. Build, deploy and manage independently
+
+image::https://wdc.objectstorage.softlayer.net/v1/AUTH_7046a6f4-79b7-4c6c-bdb7-6f68e920f6e5/Code-Articles/cl-refactor-microservices-bluemix-trs-1/images/fig1.png[]
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb:0}: Frontend backend split
+****

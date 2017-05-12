@@ -1,0 +1,115 @@
+= Failsafe
+
+
+== Dependency
+
+[source, xml]
+----
+<dependency>
+    <groupId>net.jodah</groupId>
+    <artifactId>failsafe</artifactId>
+    <version>0.9.5</version>
+</dependency>
+----
+
+== Timeouts / retries
+
+```java
+RetryPolicy retryPolicy = new RetryPolicy()
+  .retryOn(ConnectException.class)
+  .withDelay(1, TimeUnit.SECONDS)
+  .withMaxRetries(3);
+```
+
+```java
+// Run with retries
+Failsafe.with(retryPolicy).run(() -> connect());
+
+// Run synchronously
+Failsafe.with(retryPolicy).run(this::connect);
+
+// Get with retries
+Connection connection = Failsafe.with(retryPolicy).get(() -> connect());
+```
+
+== Retry policies
+
+* For particular failures:
+
+```java
+RetryPolicy retryPolicy = new RetryPolicy()
+  .retryOn(ConnectException.class, SocketException.class);
+  .retryOn(failure -> failure instanceof ConnectException);
+```
+
+* For particular results or conditions:
+
+```java
+retryPolicy
+  .retryWhen(null);
+  .retryIf(result -> result == null);
+```
+
+== !
+
+.Simple delay
+```java
+retryPolicy.withDelay(1, TimeUnit.SECONDS);
+```
+
+.Back off
+```java
+retryPolicy.withBackoff(1, 30, TimeUnit.SECONDS);
+```
+
+.Max number of retries and a max retry duration
+```java
+retryPolicy
+  .withMaxRetries(100)
+  .withMaxDuration(5, TimeUnit.MINUTES);
+```
+
+== Circuit breaking
+
+```java
+CircuitBreaker breaker = new CircuitBreaker()
+  .withFailureThreshold(3, 10) // <1>
+  .withSuccessThreshold(5)    // <2>
+  .withDelay(1, TimeUnit.MINUTES); // <3>
+```
+<1> Open circuit when 3 out of 10 failed
+<2> Close again if a number of trial executions succeed
+<3> Try closing again after delay
+
+== !
+
+.Failing conditions
+```java
+breaker.
+  .failWhen(true)
+  .failOn(NoRouteToHostException.class)
+  .failIf((result, failure) -> result == 500 || failure instanceof NoRouteToHostException);
+```
+.Fallbacks
+```java
+Failsafe.with(retryPolicy)
+  .withFallback(this::connectToBackup)
+  .get(this::connectToPrimary);
+```
+
+== Notifications
+
+```java
+Failsafe.with(retryPolicy)
+  .onComplete((cxn, failure) -> {
+    if (cxn != null)
+      log.info("Connected to {}", cxn);
+    else if (failure != null)
+      log.error("Failed to create connection", e);
+  })
+  .onSuccess(cxn -> log.info("Connected to {}", cxn))
+  .onFailure(failure -> log.error("Failed to create connection", e))
+  .onFailedAttempt(failure -> log.error("Connection attempt failed", failure))
+  .onRetry((c, f, ctx) -> log.warn("Failure #{}. Retrying.", ctx.getExecutions()))
+  .get(this::connect);
+```

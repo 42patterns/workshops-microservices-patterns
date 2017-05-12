@@ -1,0 +1,149 @@
+= Pattern #{counter:patterns}: Circuit breaker
+
+****
+Circumvent subsequent requests when the system is not healthy
+****
+
+== Intent
+
+[quote, Michael Nygard,  Release It]
+Detect excess usage, fail first, and open the circuit. More abstractly, the circuit breaker exists to allow one subsystem (an electrical circuit) to fail (excessive current draw, possibly from a short-circuit) without destroying the entire system (the house).
+
+== Problem
+
+To contain and manage failure without having it cascade throughout the services participating in the workflow:
+
+* never be sure how the other system will behave when the communication diverge from the “happy path”
+** never trust that the other service will behave according to the established protocol
+* minimize the risk of having one system overloading another during unexpected load
+increase
+* avoiding cascading failures requires services that are fully decoupled and isolated
+
+== Discussion
+
+""
+Bulkheading has been used in the ship construction for centuries as a way to “create watertight compartments that can contain water in the case of a hull breach or other leak.” The ship is divided into distinct and completely isolated watertight compartments, so that if compartments are filled up with water, the leak does not spread and the ship can continue to function and reach its destination.
+""
+
+image::circuit-breakers-bbbb3.png[width=40%]
+
+
+== !
+
+[quote, Jonas Boner, Reactive Microservices Architecture]
+""
+Resilience - the ability to heal from failure - depends on compartmentalization and containment of failure, and can only be achieved by breaking free from the strong coupling of synchronous communication.
+""
+
+== !
+
+Timeouts::
+* Easiest way to accomodate a failure of upstream service
+** How long can I wait?
+* Important on all out-of-process calls + default timeout for everything
+* Log timeouts, analyze and change them accordingly
+
+Circuit breakers::
+* Capture failures
+* Retry tasks and
+* If the failure persists, quarantine the service for a specific period of time while waiting for the service to recover
+
+== !
+
+image::circuit-breakers-29665.png[]
+
+== !
+
+image::circuit-breakers-41ce8.png[]
+
+== Structure
+
+----
+setup_timer()
+try(client.call()) {
+  if (unsuccessful) {
+    adjust_counters()
+  }
+}
+----
+
+
+== Example
+
+Tools::
+* https://github.com/jhalterman/failsafe
+* https://github.com/Netflix/Hystrix
+* https://github.com/javaslang/javaslang-circuitbreaker
+* https://github.com/Comcast/jrugged
+
+Flavours::
+* AOP approach (Hystrix)
+* Callable approach (Failsafe)
+
+== Example (2)
+
+* Executable logic can be passed through Failsafe as simple lambda expressions or method references. In Hystrix, your executable logic needs to be placed in a HystrixCommand implementation.
+* Asynchronous executions in failsafe are performed on a user supplied ThreadPool / Scheduler. In Hystrix, asynchronous commands are executed on internally managed thread pools for particular dependencies.
+* Failsafe supports retries in addition to circuit breakers
+
+
+== Implementation
+
+[source, java]
+----
+public Object run() throws Exception {
+
+    long start = System.currentTimeMillis();
+    try {
+        //set timers to reset circuit
+        if (errorCounter >= maxNbrOfFailures) return defaultValue;
+        return ic.proceed();
+    } catch (Exception ex) {
+        errorCounter++;
+        throw ex;
+    } finally {
+        long duration = System.currentTimeMillis() - start;
+        if (duration >= timeout)
+            errorCounter++;
+    }
+}
+----
+
+
+== Rules of thumb - timeouts
+
+Apply to Integration Points, Blocked Threads, and Slow Responses::
+The Timeouts pattern prevents calls to Integration Points from becoming Blocked Threads. Thus, they avert Cascading Failures.
+
+Apply to recover from unexpected failures::
+When an operation is taking too long, sometimes we don’t care why...we just need to give up and keep moving. The Timeouts pattern lets us do that.
+
+Consider delayed retries::
+Most of the explanations for a timeout involve problems in the network or the remote system that won’t be resolved right away.
+Immediate retries are liable to hit the same problem and result in another timeout.
+That just makes the user wait even longer for his error message.
+Most of the time, you should queue the operation and retry it later.
+
+== Rules of thumb - circuit breaking
+
+Don’t do it if it hurts::
+Circuit Breaker is the fundamental pattern for protecting your system from all manner of Integration Points problems.
+When there’s a difficulty with Integration Points, stop calling it!
+
+Use together with Timeouts::
+Circuit Breaker is good at avoiding calls when Integration Points has a problem.
+The Timeouts pattern indicates that there is a problem in Integration Points.
+
+Expose, track, and report state changes::
+Popping a Circuit Breaker _always_ indicates there is a serious problem. It should be visible to operations. It should be reported, recorded, trended, and correlated.
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb}: Circuit breaker
+****
+
+****
+Task #{counter:task-nb}: Netflix Zuul
+****

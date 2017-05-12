@@ -1,0 +1,38 @@
+
+= Distilling Microservices Patterns
+Jakub Marchwicki <@kubem>
+:imagesdir: images
+:idprefix: slide_
+:icons: font
+:revealjs_customtheme: css/custom_serif.css
+:revealjs_center: false
+:revealjs_transition: fade
+:revealjs_progress: true
+:revealjs_history: true
+:revealjs_controls: false
+:revealjs_width: 1280
+:revealjs_height: 720
+:source-highlighter: coderay
+:ditaa-option-#transparent: true
+
+include::sections/patterns-basics.adoc[leveloffset=+1]
+
+== Set of patterns
+
+* Externalize User Interface
+* Consumer driven contracts
+* Front-end architectures (API Gateway)
+* Circuit breaker
+* Load balancing and Service orchestration
+* Externalized configuration and service discovery
+* Distributed logging and monitoring
+* Application security
+
+include::sections/patterns-external-ui.adoc[leveloffset=+1]
+include::sections/patterns-consumer-driven-contracts.adoc[leveloffset=+1]
+include::sections/patterns-api-gateway.adoc[leveloffset=+1]
+include::sections/patterns-circuit-breakers.adoc[leveloffset=+1]
+include::sections/patterns-configuration-and-discovery.adoc[leveloffset=+1]
+//include::sections/patterns-orchestration.adoc[leveloffset=+1]
+include::sections/patterns-monitoring.adoc[leveloffset=+1]
+include::sections/patterns-security.adoc[leveloffset=+1]

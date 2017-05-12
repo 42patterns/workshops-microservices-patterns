@@ -1,0 +1,102 @@
+= Pattern #{counter:patterns}: API Gateway
+:figure-caption!:
+
+// http://container-solutions.com/monitoring-performance-microservice-architectures/
+// http://ryanjbaxter.com/cloud/spring%20cloud/spring/2016/07/07/spring-cloud-sleuth.html
+
+== Intent
+
+Direct Client‑to‑Microservice communication rarely makes sense, due to:
+
+* mismatch between the needs of the client and the fine‑grained APIs exposed by each of the microservices,
+* some communication protocols might not be _web-friendly_ (binary RPC protocols used by some AMQP messaging protocols) - neither browser not firewall friendly,
+* tight coupling might appear and it can make refactoring microservices difficult.
+
+== Problem
+
+image::file:///home/kubam/workspaces/szkolenia/slides/microservices/_src/apigateway/Building%20Microservices%20Using%20an%20API%20Gateway%20%7C%20NGINX_files/Richardson-microservices-part2-2_microservices-client.png[]
+
+== Discussion
+
+API Gateway::
+* a server that is the single entry point into the system
+** similar to the Facade pattern from object‑oriented design
+* encapsulates the internal system architecture and provides an API that is tailored to each client
+* might have other responsibilities such as authentication, monitoring, load balancing, caching, request shaping and management, and static response handling
+
+== !
+
+image::file:///home/kubam/workspaces/szkolenia/slides/microservices/_src/apigateway/Building%20Microservices%20Using%20an%20API%20Gateway%20%7C%20NGINX_files/Richardson-microservices-part2-3_api-gateway.png[]
+
+== !
+
+Benefits::
+* encapsulates the internal structure of the application
+** provides each kind of client with a specific API
+** reduces the number of round trips between the client and application
+** simplifies the client code
+
+Drawbacks::
+* additional system (landscape) component (to be developed, deployed and managed)
+* potential bottleneck
+** API Gateway must be updated in order to expose each microservices endpoint
+
+== Implementation
+
+Various design issues for consideration::
+* performance and scalability
+* service invocation
+* service discovery
+* reactive programming model
+* handling partial failures
+
+== !
+
+Performance and scalability::
+* asynchronous and nonblocking I/O
+
+image::file:///home/kubam/workspaces/slides/microservices-3camp/build/asciidoc/revealjs/images/timeouts.png[]
+
+== !
+
+Service invocation::
+* Different services might embrace different inter-process communication styles
+** Message brokers (JMS / AMQP)
+** Brockerless (Zeromq)
+** Synchronous HTTP
+
+Service discovery::
+* API Gateway needs information about location (IP address) of each microservice it communicates with
+** This information cannot be hardwire, due to dynamic nature of the microservice environment
+** While infrastructure elements (message brokers) might have static location, application services might change from deployment to deployment
+
+== !
+
+Reactive programming model::
+* Important when goes beyond simple routing requests to an appropriate backend service
+* Dependency between requests
+** validate the request by calling an authentication service
+** routing the request to a backend service afterwards
+* Managing multiple, dependent asynchronous calls
+
+Handling partial failures::
+* some downstream services might respond slowly or be unavailable
+** API Gateway should never block indefinitely waiting for a response
+** failure handling might depend on the specific scenario and which service is failing (default value, static / cached data, or returning error to a client)
+
+== Examples
+
+* Neflix Zuul
+* Amazon API Gateway
+* Homegrown implementation
+
+== !
+
+image::https://camo.githubusercontent.com/4eb7754152028cdebd5c09d1c6f5acc7683f0094/687474703a2f2f6e6574666c69782e6769746875622e696f2f7a75756c2f696d616765732f7a75756c2d726571756573742d6c6966656379636c652e706e67[]
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb}: API Gateway
+****

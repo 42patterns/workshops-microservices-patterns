@@ -1,0 +1,190 @@
+= Pattern #{counter:patterns}: Monitoring
+:figure-caption!:
+
+// http://container-solutions.com/monitoring-performance-microservice-architectures/
+// http://ryanjbaxter.com/cloud/spring%20cloud/spring/2016/07/07/spring-cloud-sleuth.html
+// http://zipkin.io/pages/architecture.html
+
+****
+Monitor	the	small things, and use aggregation to see the bigger picture
+****
+
+== Intent
+
+[quote]
+""
+Modern Internet services are often implemented as complex, large-scale distributed systems. These applications are constructed from collections of software modules that may be developed by different teams, perhaps in different programming languages, and could span many thousands of machines across multiple physical facilities. Tools that aid in understanding system behavior and reasoning about performance issues are invaluable in such an environment.
+""
+
+== Problem
+
+// TODO: functions sketch - multiple services
+// image::file:///home/kubam/workspaces/slides/microservices/build/asciidoc/revealjs/images/flavours-serverless_2.png[]
+
+* A simple service communication diagram is in fact distributed among multiple services and instances
+* Individual log processing is close to impossible
+* Application context is becoming important (deployment skew I/O metrics)
+
+== Discussion
+
+Past times monitoring::
+* *Reactive monitoring* (Naigos)
+* Monitors infrastructure and alerts when resources are running low (out of disk, CPU, or memory)
+
+Future friendly (quality) monitoring::
+* Proactive alerts
+* Different categories of tracked data
+* Real time log aggregation
+* Services interactions
+
+== Classes of monitoring services
+
+Class 0 (Context-Less Monitoring)::
+* Think *ping*
+* Collects information and alerts if there is an anomaly
+* Look at the state of the infrastructure as it is at the moment of observation, compare with a threshold value to decide if the state is healthy or not
+* Raw measurements without any additional context
+
+== !
+
+image::http://container-solutions.com/content/uploads/2015/12/monitoring_image07.png[]
+
+== !
+
+Class 1 (Stateful Monitoring)::
+* Think *Naigos*
+* Crossing the threshold value was not a sufficient to trigger an alert.
+* Compare the current sample with the information on past values of the measurement, to ensure that this was truly an anomaly deserving attention.
+* _State Flapping_ occurs when a service or host changes state too frequently, resulting in a storm of problem and recovery notifications. Flapping can be indicative of configuration problems (i.e. thresholds set too low), troublesome services, or real network problems.
+
+== !
+
+image::http://container-solutions.com/content/uploads/2015/12/monitoring_image08.png[width=90%]
+
+== !
+
+Class 2 (Syntactic Monitoring)::
+* Understanding the correlation between services
+** Such correlations exist if there are functional or structural dependencies between components, e.g. two containers competing for I/O bandwidth of a physical host that runs them
+* Understand both historical context (previous behavior) as well as syntactic (structural) context
+** If related components degrade one after another (“domino effect”)
+
+== !
+
+image::http://container-solutions.com/content/uploads/2015/12/monitoring_image09.png[width=80%]
+
+== Applying wrong class of monitoring
+
+image::http://container-solutions.com/content/uploads/2015/12/monitoring_image05.png[width=70%]
+
+== !
+
+image::http://container-solutions.com/content/uploads/2015/12/monitoring_image03.png[width=85%]
+
+== Implementation
+
+.Drapper, a Large-Scale Distributed Systems Tracing Infrastructure
+
+[quote]
+Google’s production distributed systems tracing infrastructure, and describe how our design goals of low overhead, application-level transparency, and ubiquitous deployment on a very large scale system were met.
+
+== Distributed tracing - *Span*
+
+The basic unit of work (e.g. sending RPC)::
+* Spans are started and stopped
+* They keep track of their timing information
+* Once you create a span, you must stop it at some point in the future
+* Has a parent and can have multiple children
+
+== Distributed tracing - *Trace*
+
+A set of spans forming a tree-like structure::
+* For example, if you are running a book store then
+** Trace could be retriving a list of available books
+** Assuming that to retrive the books you have to send 3 requests to 3 services
+then you could have at least 3 spans (1 for each hop) forming 1 trace
+
+== !
+
+image::https://raw.githubusercontent.com/spring-cloud/spring-cloud-sleuth/master/docs/src/main/asciidoc/images/trace-id.png[width=90%]
+
+== Distributed tracing - *Annotations*
+
+Events logs::
+* Client Sent (CS) - The client has made a request
+* Server Received (SR) - The server side got the request and will start processing it
+** Subtractions the CS timestamp from CR timestamp gives the network latency.
+* Server Send (SS) - Annotated upon completion of request processing
+** SS timestamp - SR timestamp -> time needed by the server side to process the request
+* Client Received (CR) - Signifies the end of the span.
+** The client has successfully received the response from the server side
+
+== !
+
+image::https://raw.githubusercontent.com/spring-cloud/spring-cloud-sleuth/master/docs/src/main/asciidoc/images/zipkin-ui.png[]
+
+== !
+
+image::http://zipkin.io/public/img/architecture-1.png[]
+
+== !
+
+[ditaa, "zipkin-tracing-seq-diagram"]
+----
++-------------+ +-----------------------+  +-------------+  +------------------+
+| User Code   | | Trace Instrumentation |  | Http Client |  | Zipkin Collector |
++-------------+ +-----------------------+  +-------------+  +------------------+
+       |                 |                         |                 |
+       |   +---------+   |                         |                 |
+       | --|GET /foo |-> | ----+                   |                 |
+       |   +---------+   |     | record tags       |                 |
+       |                 | ◀---+                   |                 |
+       |                 |                         |                 |
+       |                 | ----+                   |                 |
+       |                 |     | add trace headers |                 |
+       |                 | ◀---+                   |                 |
+       |                 |                         |                 |
+       |                 | ----+                   |                 |
+       |                 |     | record timestamp  |                 |
+       |                 | ◀---+                   |                 |
+       |                 |                         |                 |
+       |                 |   +-----------------+   |                 |
+       |                 | --|GET /foo         |-> |                 |
+       |                 |   |X-B3-TraceId: aa |   | ----+           |
+       |                 |   |X-B3-SpanId:  6b |   |     |           |
+       |                 |   +-----------------+   |     | invoke    |
+       |                 |                         |     | request   |
+       |                 |                         |     |           |
+       |                 |                         |     |           |
+       |                 |       +--------+        | <---+           |
+       |                 | <-----|200 OK  |------- |                 |
+       |                 |       +--------+        |                 |
+       |                 | ----+                   |                 |
+       |                 |     | record duration   |                 |
+       |    +--------+   | ◀---+                   |                 |
+       | <--|200 OK  |-- |                         |                 |
+       |    +--------+   |   +--------------------------------+	     |
+       |                 | --| asynchronously report span     |----> |
+                             |                                |
+                             |{                               |
+                             |  "traceId": "aa",              |
+                             |  "id": "6b",                   |
+                             |  "name": "get",                |
+                             |  "timestamp": 1483945573944000,|
+                             |  "duration": 386000,           |
+                             |  "annotations": [              |
+                             |--snip--                        |
+                             +--------------------------------+
+
+----
+
+== !
+
+image::https://raw.githubusercontent.com/spring-cloud/spring-cloud-sleuth/master/docs/src/main/asciidoc/images/kibana.png[]
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb}: Monitoring
+****

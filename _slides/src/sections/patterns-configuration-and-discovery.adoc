@@ -1,0 +1,176 @@
+= Pattern #{counter:patterns}: Load balancing and discovery
+
+****
+To improve the distribution of workloads across multiple computing resources,
+a service needs a list of available instances.
+****
+
+****
+In order to communicate with another instance, a service needs to
+know the other service’s address.
+****
+
+== Intent
+
+All solutions under _Load balancing and Service Discovery_ umbrella provide::
+
+* mechanism	for	an	instance	to	register	itself
+* they	provide	a way	to	find	other	service	once	it’s	registered
+* provide a way to balance workload between instances
+
+Service	discovery	gets	more	complicated, though,	when	we	are	start considering	an	environment	where	we	are	constantly	destroying	and deploying	new	instances	of	services.
+
+== Problem
+
+****
+Figure out where is the service I'd like to call +
+And how to call it
+****
+
+== !
+
+image::configuration-and-discovery-53962.png[width="55%"]
+
+== Discussion
+
+Simplest solutions (sufficient for load balancing)::
+* hardcode the physical address and port of all the services that a service needs to use
+* have addresses and ports externalized into a configuration file provided at startup time
+
+****
+Both cases forces static deployment (no changes in the infrastructure) which contradicts microservices agility (a distributed monolith?)
+****
+
+== !
+
+Realistic solution (fully dynamic environment)::
+* location of services is provided indirectly (decoupled between the services through shared abstractions)
+
+****
+In microservicers environments services stay decoupled and mobile
+****
+
+== Structure
+
+Client-Side Load Balancing (Service Discovery)::
+* each service register itself in a central registry
+* all services look up the information
+
+== !
+
+image::configuration-and-discovery-70d46.png[width="60%"]
+
+== !
+
+Server-Side Load Balancing (Service Discovery)::
+* store the information on the load-balancer (AWS Elastic Load Balancing works that way)
+* clients always call same address which encapsulate the dynamic changes of implementations
+
+== !
+
+image::configuration-and-discovery-b6478.png[]
+
+== Fallacies of distributed computing
+
+[quote, Wikipedia]
+""
+are a set of assertions made by L Peter Deutsch and others at Sun Microsystems describing false assumptions that programmers new to distributed applications invariably make
+""
+
+[%notitle]
+== 8 Fallacies...
+
+.8 Fallacies of Distributed Computing
+. The Network is Reliable
+. Latency is Zero
+. Bandwidth is Infinite
+. The Network is Secure
+. Topology Doesn’t Change
+. There is One Administrator
+. Transport Cost is Zero
+. The Network is Homogeneous
+
+== CAP theorem
+
+[quote]
+The CAP Theorem states that, in a distributed system, you can only have two out of the following three guarantees across a write/read pair: Consistency, Availability, and Partition Tolerance - one of them must be sacrificed.
+
+== CAP theorem
+
+* *Consistency* - A read is guaranteed to return the most recent write for a given client
+* *Availability* - A non-failing node will return a reasonable response within a reasonable amount of time (no error or timeout)
+* *Partition Tolerance* - The system will continue to function when network partitions occur
+
+== CAP theorem
+
+* Given that networks aren't completely reliable, you must tolerate partitions in a distributed system, period
+* CP - Consistency / Partition Tolerance
+* AP - Availability / Partition Tolerance
+
+== Consistency / Partition Tolerance
+
+Wait for a response from the partitioned node which could result in a timeout error. The system can also choose to return an error, depending on the scenario you desire. Choose Consistency over Availability when your business requirements dictate atomic reads and writes.
+
+image::http://robertgreiner.com/uploads/images/2014/CAP-CP.png[]
+
+== Availability / Partition Tolerance
+
+Return the most recent version of the data you have, which could be stale. This system state will also accept writes that can be processed later when the partition is resolved. Choose Availability over Consistency when your business requirements allow for some flexibility around when the data in the system synchronizes. Availability is also a compelling option when the system needs to continue to function in spite of external errors (shopping carts, etc.)
+
+image::http://robertgreiner.com/uploads/images/2014/CAP-AP.png[]
+
+== !
+
+.Consistency vs. Availability
+* All information are stored in a consistent fashion (placed in a single atomic store) - *consistency*
+* Information are distributed in a peer-to-peer manner (eventual consistency) - *availability*
+
+****
+(...) it is impossible for a distributed computer system to simultaneously provide all three of the following guarantees: Consistency, Availability and Partition tolerance.
+****
+
+== Potential problems (as of Eureka) {counter2:eureka-steps}
+
+****
+How long does it take to propagate a newly registered service
+****
+
+== Potential problems (as of Eureka) ({counter:eureka-steps})
+
+. Client Registration +
+Happens at the first heartbeat sent to the server. Since the client just started, the server doesn't know anything about it and replies with a 404 forcing the client to register. The client then immediately issues a second call with all the registration information. The client is now registered. +
+*The first heartbeat happens 30 seconds after startup*
+. Server ResponseCache +
+The server maintains a response cache that is updated every *30s by default*. So even if your instance is just registered, it won't appear in the result of a call to the `/eureka/apps` REST endpoint. +
+*Can take up to a minute for service to be visible*
+
+== Potential problems (as of Eureka) ({counter:eureka-steps})
+
+[start=3]
+. Client cache refresh +
+Eureka client maintain a cache of the registry information. This cache is refreshed every *30 seconds by default*. It may take another 30s before a client decides to refresh its local cache and discover newly registered instances. +
+*Total timing: 90seconds*
+. LoadBalancer refresh +
+The load balancer used by Ribbon gets its information from the local Eureka client. It also maintains a local cache to avoid calling the discovery client for every request. *This cache is refreshed every 30s.*
+
+****
+It may take *up to 2 minutes* for newly registered instance to start receiving traffic.
+****
+
+== Example
+
+Known implementations::
+* Zookeeper
+* Consul
+* Eureka
+
+[.live-demo]
+== Exercise
+
+****
+Task #{counter:task-nb} & #6: Load balancing
+****
+
+****
+Task #{counter:task-nb} & #8: Service discovery
+****
