@@ -1,0 +1,10 @@
+server:
+  context-path: /auth
+  port: 18888
+
+resteasy:
+  deployment:
+    async_job_service_enabled: true
+
+keycloak:
+  configurationFile: /keycloak-users-config.json

@@ -29,6 +29,7 @@
         <module>profanity-check-service</module>
         <module>registry</module>
         <module>zipkin</module>
+        <module>keycloak</module>
     </modules>
 
 </project>
