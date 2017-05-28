@@ -242,3 +242,52 @@ TIP: Spring Sleuth documentation is quite comprehensive in that matter. https://
 Run Zipkin through `mvn spring-boot:run -f zipkin`
 
 TIP: Zipkin UI runs by default at http://localhost:9411
+
+== Security
+
+image::tasks-auth.png[]
+
+Access to the application should be limited to users defined within a third-party authorisation service.
+Both username and password and token based authentication must be possible.
+
+//https://stackoverflow.com/questions/34436088/integrate-spring-cloud-load-balancing-with-keycloakresttemplate
+
+=== Context
+
+The authentication provider in the application landscape is a RedHat Keycloak Identity and Access Management System.
+It provides both OAuth2 as well as JWT authentication - and both will be used for user verification.
+
+//=== Task #{counter:exercise}
+//
+//The current implementation works but it's not ideal situation. While the whole environment is using service discovery pattern, location of auth provider (Keycloak SSO server) is hardcoded in `api-gateway` configuration.
+//This needs changing.
+//
+//[TIP]
+//====
+//Before you really start you remember to register keycloak in Eureka (under name `auth`)!
+//
+//Unfortunatelly, in our configuration both SpringBoot and Keycloak depend on JAX-RS standard - in different versions (welcome to dependency hell).
+//To run the example either exclude `javax.ws.rs:jsr311-api` from E caureka dependencies or place `spring-cloud-starter-eureka` in the right place on the classpath.
+//====
+
+// https://stackoverflow.com/questions/34436088/integrate-spring-cloud-load-balancing-with-keycloakresttemplate
+
+=== Task #{counter:exercise}
+
+One of the approaches in securing microservices environments is to terminate access token on the `api-gateway` and pass only username, email and roles and one of the headers.
+In the given example token is available as a part of `KeycloakPrincipal` which you can inject directly into the controller.
+
+Pass the appropriate authorisation values to the downstream services, embedding them to the request header.
+
+TIP: Lookup the token structure in the http://jwt.io/#debugger to choose appropriate fields
+
+TIP: You can easily embedded authorisation fields to all Spring's `RestTemplate` request by adding appropriate implementation of `ClientHttpRequestInterceptor` class.
+Implement the class and add username (`X-Username`) and roles (`X-Roles`) headers.
+
+=== How to run
+
+Start the Authentication service (Keycloak) by `mvn spring-boot:run -f keycloak`
+
+// Zuul
+// https://stackoverflow.com/questions/37329232/zuul-reverse-proxy-with-keycloak-server
+// https://github.com/xtremebiker/zuul-keycloak-test
