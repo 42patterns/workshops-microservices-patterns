@@ -7,4 +7,6 @@ resteasy:
     async_job_service_enabled: true
 
 keycloak:
-  configurationFile: /keycloak-users-config.json
+  adminUsername: admin
+  adminPassword: admin
+  configurationFile: classpath:keycloak-users-config.json

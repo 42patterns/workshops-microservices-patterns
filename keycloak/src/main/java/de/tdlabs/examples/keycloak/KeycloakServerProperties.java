@@ -2,17 +2,14 @@ package de.tdlabs.examples.keycloak;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/**
- * Created by tom on 12.06.16.
- */
 @ConfigurationProperties(prefix = "keycloak")
 public class KeycloakServerProperties {
 
-    private String adminUsername = "admin";
+    private String adminUsername;
 
-    private String adminPassword = "admin";
+    private String adminPassword;
 
-    private String usersConfigurationFile = "/keycloak-users-config.json";
+    private String configurationFile;
 
     public String getAdminUsername() {
         return adminUsername;
@@ -30,11 +27,11 @@ public class KeycloakServerProperties {
         this.adminPassword = adminPassword;
     }
 
-    public String getUsersConfigurationFile() {
-        return usersConfigurationFile;
+    public String getConfigurationFile() {
+        return configurationFile;
     }
 
-    public void setUsersConfigurationFile(String usersConfigurationFile) {
-        this.usersConfigurationFile = usersConfigurationFile;
+    public void setConfigurationFile(String configurationFile) {
+        this.configurationFile = configurationFile;
     }
 }

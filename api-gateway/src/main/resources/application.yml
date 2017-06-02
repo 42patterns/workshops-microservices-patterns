@@ -2,9 +2,21 @@ spring:
   application:
     name: api-gateway
 
+security:
+  basic:
+    enabled: false
+
 server:
   port: 9999
 logging:
   file: /tmp/logs/api-gateway.log
   level:
     org.springframework.web.client: DEBUG
+
+keycloak:
+  configurationFile: classpath:keycloak.json
+#  auth-server-url: http://localhost:18888/auth
+#  realm: security-examples
+#  resource: demo
+#  public-client: true
+#  ssl-required: external
