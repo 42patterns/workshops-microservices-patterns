@@ -28,6 +28,7 @@
         <module>profanity-filter</module>
         <module>profanity-check-service</module>
         <module>registry</module>
+        <module>zipkin</module>
     </modules>
 
 </project>
