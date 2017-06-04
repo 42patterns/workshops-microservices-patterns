@@ -2,14 +2,21 @@ package com.example.apigateway.gateway;
 
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.sleuth.Sampler;
+import org.springframework.cloud.sleuth.instrument.async.LazyTraceExecutor;
+import org.springframework.cloud.sleuth.instrument.async.TraceableExecutorService;
+import org.springframework.cloud.sleuth.sampler.AlwaysSampler;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,9 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -55,20 +60,29 @@ public class GatewayApp {
     }
 
     @Bean
-    Executor asyncExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(40);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("ApiGatewayLookup-");
-        executor.initialize();
-        return executor;
+    ExecutorService asyncExecutor() {
+        return Executors.newFixedThreadPool(4, new CustomizableThreadFactory("ApiGateway-"));
     }
 
     @Bean
     byte[] defaultBanner() throws IOException {
         InputStream stream = GatewayApp.class.getResource("/default-banner.png").openStream();
         return StreamUtils.copyToByteArray(stream);
+    }
+
+}
+
+@Configuration
+class TracesConfig {
+
+    @Bean
+    public Sampler defaultSampler() {
+        return new AlwaysSampler();
+    }
+
+    @Bean
+    public TraceableExecutorService traceExecutor(BeanFactory bf, ExecutorService exec) {
+        return new TraceableExecutorService(bf, exec);
     }
 
 }
@@ -80,13 +94,15 @@ class Controllers {
     RestTemplate rest;
 
     @Autowired
-    Executor exec;
+    TraceableExecutorService exec;
+
+    LazyTraceExecutor e;
 
     @Autowired
     byte[] defaultBanner;
 
     @RequestMapping(value = "/banners", produces = MediaType.IMAGE_PNG_VALUE)
-    public CompletableFuture<byte[]> getBanners() {
+    public CompletableFuture<ResponseEntity<byte[]>> getBanners() {
         final String bannersUrl = "http://banners/";
 
         final RetryPolicy rt = new RetryPolicy()
@@ -94,9 +110,10 @@ class Controllers {
                 .withDelay(10, TimeUnit.SECONDS)
                 .withMaxRetries(2);
 
-        return CompletableFuture.supplyAsync(() -> Failsafe.with(rt)
-                .withFallback(defaultBanner)
-                .get(() -> rest.getForObject(bannersUrl, byte[].class)), exec);
+        return shiftbyte(exec.submit(() ->
+                Failsafe.with(rt)
+                        .withFallback(defaultBanner)
+                        .get(() -> rest.getForEntity(bannersUrl, byte[].class))));
     }
 
     @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST},
@@ -131,15 +148,33 @@ class Controllers {
     private CompletableFuture<ResponseEntity<String>> makeCall(URI uri, String payload, final HttpServletRequest request) {
         final String method = request.getMethod();
 
-        return CompletableFuture.supplyAsync(() -> {
+        return shift(exec.submit(() -> {
+
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(payload, headers);
-
             return rest.exchange(uri, HttpMethod.resolve(method), entity, String.class);
-        }, exec);
-
+        }));
     }
 
+    private static CompletableFuture<ResponseEntity<byte[]>> shiftbyte(Future<ResponseEntity<byte[]>> f) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private static CompletableFuture<ResponseEntity<String>> shift(Future<ResponseEntity<String>> f) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 }

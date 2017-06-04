@@ -50,6 +50,18 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- monitoring -->
+        <dependency>
+            <groupId>io.zipkin.brave</groupId>
+            <artifactId>brave-instrumentation-jaxrs2</artifactId>
+            <version>4.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.zipkin.reporter</groupId>
+            <artifactId>zipkin-sender-urlconnection</artifactId>
+            <version>0.10.0</version>
+        </dependency>
+
         <!-- CDC -->
         <dependency>
             <groupId>org.jboss.arquillian.junit</groupId>
