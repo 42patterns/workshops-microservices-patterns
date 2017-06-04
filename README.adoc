@@ -211,3 +211,34 @@ IMPORTANT: Auto register the *api-gateway* through `@EnableDiscoverClient` annot
 Run the discovery service through `mvn spring-boot:run -f registry`.
 
 TIP: Lookup registered application at http://localhost:8761/eureka/apps
+
+== Monitoring
+
+// stackdriver: https://medium.com/google-cloud/distributed-tracing-spring-boot-microservices-with-stackdriver-trace-7fe42c6de3f3
+
+=== Task #{counter:exercise}
+
+Include `profanity-filter` service in zipkin monitoring.
+
+TIP: This is a spring-boot application, so adding appropriate spring-cloud dependency should do the job
+
+=== Task #{counter:exercise}
+
+Include `banners-service` in zipkin monitoring.
+This is a non-spring project so OpenZipkin instrumentation library is recommended.
+There are dedicated libraries for different frameworks (like one for JAXRS - used in *todo-app*; lookup `RestApplication` class for inspiration).
+
+Banners service is based on SparkJava so pickup the right instrumentation library from https://github.com/openzipkin/brave/tree/master/instrumentation and use accordingly.
+
+=== Task #{counter:exercise}
+
+Calling external `profanity-check-service` is not explicitly logged with Zipkin annotation. However, you can create additional Span through API.
+Add span for calling external service and log appropriate 'Client Sent' and 'Client Received' events
+
+TIP: Spring Sleuth documentation is quite comprehensive in that matter. https://cloud.spring.io/spring-cloud-sleuth/spring-cloud-sleuth.html#_span_lifecycle
+
+=== How to run
+
+Run Zipkin through `mvn spring-boot:run -f zipkin`
+
+TIP: Zipkin UI runs by default at http://localhost:9411
