@@ -1,5 +1,7 @@
 package com.example.apigateway.banners;
 
+import brave.Tracing;
+import brave.sparkjava.SparkTracing;
 import com.netflix.appinfo.ApplicationInfoManager;
 import com.netflix.appinfo.InstanceInfo;
 import com.netflix.appinfo.MyDataCenterInstanceConfig;
@@ -8,6 +10,9 @@ import com.netflix.discovery.DefaultEurekaClientConfig;
 import com.netflix.discovery.DiscoveryClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import zipkin.reporter.AsyncReporter;
+import zipkin.reporter.Encoding;
+import zipkin.reporter.urlconnection.URLConnectionSender;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -46,12 +51,24 @@ public class Application {
     public static void main(String[] args) {
         //setup Eureka
         ApplicationInfoManager applicationInfoManager = setupEurekaClient();
+        SparkTracing tracing = setupZipkinTraces(applicationInfoManager.getInfo().getAppName());
 
         //setup SparkJava application
 >>>>>>> 98488c4... Service discovery: registering banners-service through eureka-client
         port(port);
         staticFileLocation("/webapp");
         exception(Exception.class, (exception, request, response) -> exception.printStackTrace());
+
+        before(tracing.before());
+        exception(Exception.class, tracing.exception((exception, request, response) -> {
+            exception.printStackTrace();
+            internalServerError((req, res) -> {
+                res.type("application/json");
+                return "{\"message\":\"Custom 500 handling\"}";
+            });
+        }));
+        afterAfter(tracing.afterAfter());
+
 
         get("/", (req, resp) -> {
 
@@ -79,6 +96,20 @@ public class Application {
 
         //change Eureka status to UP (from STARTING)
         applicationInfoManager.setInstanceStatus(InstanceInfo.InstanceStatus.UP);
+    }
+
+    private static SparkTracing setupZipkinTraces(String appName) {
+        //setup Zipkin / Brave (tracing)
+        URLConnectionSender sender = URLConnectionSender.builder()
+                .encoding(Encoding.JSON)
+                .endpoint("http://localhost:9411/api/v1/spans")
+                .build();
+
+        return SparkTracing.create(Tracing
+                .newBuilder()
+                .localServiceName(appName)
+                .reporter(AsyncReporter.builder(sender).build())
+                .build());
     }
 
     private static ApplicationInfoManager setupEurekaClient() {
