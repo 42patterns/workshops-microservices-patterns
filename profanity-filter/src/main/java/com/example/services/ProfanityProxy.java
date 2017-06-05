@@ -12,6 +12,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.netflix.ribbon.RibbonClient;
 import org.springframework.cloud.netflix.ribbon.StaticServerList;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -63,12 +65,23 @@ class Controllers {
 
     private ConcurrentHashMap<ObjectNode, ObjectNode> cache = new ConcurrentHashMap<>();
 
+    @Autowired
+    Tracer tracer;
+
     @RequestMapping(method = {RequestMethod.PUT, RequestMethod.POST},
             value = "/api/**", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> foo(@RequestBody(required = false) ObjectNode payload,
                                       final HttpServletRequest request) {
 
-        ObjectNode newPayload = cache.computeIfAbsent(payload, k -> maskProfanityWords(k));
+        ObjectNode newPayload;
+        Span externalProfanityCheckSpan = this.tracer.createSpan("externalProfanityCheck");
+        try {
+            externalProfanityCheckSpan.logEvent("Client Sent");
+            newPayload = cache.computeIfAbsent(payload, k -> maskProfanityWords(k));
+            externalProfanityCheckSpan.logEvent("Client Received");
+        } finally {
+            this.tracer.close(externalProfanityCheckSpan);
+        }
 
         final String legacyApiUrl = "http://legacy/";
         final String path = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
