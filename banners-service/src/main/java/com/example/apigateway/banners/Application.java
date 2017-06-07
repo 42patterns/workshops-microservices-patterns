@@ -1,6 +1,7 @@
 package com.example.apigateway.banners;
 
 import brave.Tracing;
+import brave.context.slf4j.MDCCurrentTraceContext;
 import brave.sparkjava.SparkTracing;
 import com.netflix.appinfo.ApplicationInfoManager;
 import com.netflix.appinfo.InstanceInfo;
@@ -71,7 +72,6 @@ public class Application {
 
 
         get("/", (req, resp) -> {
-
             URI rootFolder = Application.class.getResource("/webapp").toURI();
             List<Path> banners = Files.list(Paths.get(rootFolder))
                     .collect(Collectors.toList());
@@ -108,6 +108,7 @@ public class Application {
         return SparkTracing.create(Tracing
                 .newBuilder()
                 .localServiceName(appName)
+                .currentTraceContext(MDCCurrentTraceContext.create())
                 .reporter(AsyncReporter.builder(sender).build())
                 .build());
     }
