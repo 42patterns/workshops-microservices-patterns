@@ -1,4 +1,5 @@
 import {emptyItemQuery, Item, ItemList, ItemQuery, ItemUpdate} from "./item";
+const {recorder} = require('./zipkinjs/recorder')
 
 export default class Store {
     /**
@@ -6,11 +7,22 @@ export default class Store {
      * @param {function()} [callback] Called when the Store is ready
      */
     constructor(name, callback) {
+        // setup tracer
+        const {Tracer, ExplicitContext, HttpHeaders} = require('zipkin');
+
+        const tracer = new Tracer({
+            ctxImpl: new ExplicitContext(),
+            recorder
+        });
+
+        // instrument fetch
+        const wrapFetch = require('zipkin-instrumentation-fetch');
+        const zipkinFetch = wrapFetch(fetch, {tracer, serviceName: 'browser'});
 
         const url = '/api/todos';
 
         (() => {
-            fetch(url).then(function (response) {
+            zipkinFetch(url).then(function (response) {
                 var contentType = response.headers.get("content-type");
                 if (contentType && contentType.includes("application/json")) {
                     return response.json();
@@ -54,11 +66,16 @@ export default class Store {
         this.triggerUpdate = (todo) => {
             let headers = new Headers();
             headers.append("Content-Type", "application/json");
+            headers.append(HttpHeaders.TraceId, tracer.id.traceId);
+            headers.append(HttpHeaders.SpanId, tracer.id.spanId);
+            headers.append(HttpHeaders.Sampled, tracer.id.spanId);
 
-            fetch(url, {
+            zipkinFetch(url, {
                 method: 'PUT',
-                headers: headers,
-                body: JSON.stringify(todo)
+                body: JSON.stringify(todo),
+                headers: {
+                    "Content-type": "application/json"
+                }
             }).then(function (resp) {
                 console.log("TODO updated: " + resp.status);
             });
@@ -70,13 +87,12 @@ export default class Store {
          * @param {Item} todo A todo to insert
          */
         this.triggerInsert = (todo) => {
-            let headers = new Headers();
-            headers.append("Content-Type", "application/json");
-
-            fetch(url, {
+            zipkinFetch(url, {
                 method: 'POST',
-                headers: headers,
-                body: JSON.stringify(todo)
+                body: JSON.stringify(todo),
+                headers: {
+                    "Content-type": "application/json"
+                }
             }).then(function (resp) {
                 console.log("TODO crated: " + resp.headers.get('location'));
             });
@@ -88,7 +104,7 @@ export default class Store {
          * @param {Item} todo A todo to remove
          */
         this.triggerDelete = (todo) => {
-            fetch(url + '/'+ todo.id, {
+            zipkinFetch(url + '/'+ todo.id, {
                 method: 'DELETE'
             }).then(function (resp) {
                 console.log("TODO removed: " + resp.status);
